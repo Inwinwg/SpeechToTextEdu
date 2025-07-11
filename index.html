@@ -415,8 +415,7 @@
 
             recognition.onend = function() {
                 console.log('Speech recognition ended');
-                // Only restart if we're still supposed to be recording and haven't gotten results yet
-                if (isRecording && !document.getElementById('results-area').classList.contains('hidden') === false) {
+                if (isRecording && (!document.getElementById('results-area').classList.contains('hidden'))) {
                     setTimeout(() => {
                         if (isRecording) {
                             try {
@@ -507,24 +506,28 @@
 
         function startRecognition() {
             try {
+                if (isRecording) return; // Prevent duplicate starts
+
                 clearResults();
                 isRecording = true;
                 updateRecordingButton();
+
                 recognition.start();
-                
-                // Add a timeout to stop recording after 30 seconds
+
+                // Stop after 30 seconds max
                 setTimeout(() => {
                     if (isRecording) {
                         recognition.stop();
                     }
                 }, 30000);
-                
-            } catch(e) {
+
+            } catch (e) {
                 console.log('Error starting recognition:', e);
                 showRecordingStatus('error', 'Failed to start recording. Please try again.');
                 stopRecording();
             }
         }
+
 
         function stopRecording() {
             isRecording = false;
