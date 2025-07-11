@@ -415,21 +415,19 @@
 
             recognition.onend = function() {
                 console.log('Speech recognition ended');
-                if (isRecording && (!document.getElementById('results-area').classList.contains('hidden'))) {
+                if (isRecording) {
+                    // Try to restart recognition if we're still recording
                     setTimeout(() => {
-                        if (isRecording) {
-                            try {
-                                recognition.start();
-                            } catch(e) {
-                                console.log('Failed to restart recognition:', e);
-                                stopRecording();
-                            }
+                        try {
+                            recognition.start();
+                        } catch (e) {
+                            console.error('Restart failed:', e);
+                            stopRecording();
                         }
                     }, 100);
-                } else {
-                    stopRecording();
                 }
             };
+
 
             return true;
         }
@@ -506,12 +504,11 @@
 
         function startRecognition() {
             try {
-                if (isRecording) return; // Prevent duplicate starts
+                if (isRecording) return;
 
                 clearResults();
                 isRecording = true;
                 updateRecordingButton();
-
                 recognition.start();
 
                 // Stop after 30 seconds max
@@ -528,12 +525,12 @@
             }
         }
 
-
         function stopRecording() {
             isRecording = false;
             updateRecordingButton();
             document.getElementById('recording-status').classList.add('hidden');
         }
+
 
         function updateRecordingButton() {
             const btn = document.getElementById('record-btn');
