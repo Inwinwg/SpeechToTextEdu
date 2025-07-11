@@ -342,7 +342,9 @@
         let currentMode = 'teacher';
         let originalText = '';
         let isRecording = false;
+        let hasFinalResult = false;
         let recognition = null;
+
 
         // Initialize speech recognition
         function initSpeechRecognition() {
@@ -351,86 +353,68 @@
             } else if ('SpeechRecognition' in window) {
                 recognition = new SpeechRecognition();
             } else {
-                showRecordingStatus('error', 'Speech recognition not supported in this browser. Please use Chrome, Edge, or Safari.');
+                showRecordingStatus('error', 'Speech recognition not supported in this browser.');
                 return false;
             }
 
-            recognition.continuous = true;
-            recognition.interimResults = true;
+            recognition.continuous = false; // one shot per start
+            recognition.interimResults = false;
             recognition.lang = 'en-US';
-            recognition.maxAlternatives = 1;
 
-            recognition.onstart = function() {
-                console.log('Speech recognition started');
-                showRecordingStatus('info', '🎙️ Listening... Speak clearly!');
+            recognition.onstart = function () {
+                showRecordingStatus('info', '🎙️ Listening... Speak clearly.');
+                console.log('Recognition started');
             };
 
-            recognition.onresult = function(event) {
-                let transcript = '';
+            recognition.onresult = function (event) {
                 let finalTranscript = '';
-                
+
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     if (event.results[i].isFinal) {
                         finalTranscript += event.results[i][0].transcript;
-                    } else {
-                        transcript += event.results[i][0].transcript;
                     }
                 }
-                
-                // Show interim results
-                if (transcript) {
-                    showRecordingStatus('info', '🎙️ Heard: ' + transcript);
-                }
-                
-                // Process final results
+
                 if (finalTranscript.trim()) {
                     processRecognitionResult(finalTranscript.trim());
                 }
             };
 
-            recognition.onerror = function(event) {
-                console.log('Speech recognition error:', event.error);
-                let errorMessage = '';
-                
-                switch(event.error) {
+            recognition.onerror = function (event) {
+                let msg = '';
+                switch (event.error) {
                     case 'not-allowed':
-                        errorMessage = 'Microphone access denied. Please allow microphone access and try again.';
+                        msg = 'Microphone access denied.';
                         break;
                     case 'no-speech':
-                        errorMessage = 'No speech detected. Please try speaking louder or closer to the microphone.';
+                        msg = 'No speech detected.';
                         break;
                     case 'audio-capture':
-                        errorMessage = 'Microphone not found. Please check your microphone connection.';
-                        break;
-                    case 'network':
-                        errorMessage = 'Network error. Please check your internet connection.';
+                        msg = 'Microphone not found.';
                         break;
                     default:
-                        errorMessage = 'Error occurred: ' + event.error;
+                        msg = 'Error: ' + event.error;
                 }
-                
-                showRecordingStatus('error', errorMessage);
+                showRecordingStatus('error', msg);
                 stopRecording();
             };
 
-            recognition.onend = function() {
-                console.log('Speech recognition ended');
-                if (isRecording) {
-                    // Try to restart recognition if we're still recording
-                    setTimeout(() => {
-                        try {
-                            recognition.start();
-                        } catch (e) {
-                            console.error('Restart failed:', e);
-                            stopRecording();
-                        }
-                    }, 100);
+            recognition.onend = function () {
+                console.log('Recognition ended');
+                if (isRecording && !hasFinalResult) {
+                    // Try to restart ONLY if no final result has come in yet
+                    try {
+                        recognition.start();
+                    } catch (e) {
+                        console.log('Restart failed:', e);
+                        stopRecording();
+                    }
                 }
             };
 
-
             return true;
         }
+
 
         function switchMode(mode) {
             currentMode = mode;
@@ -487,49 +471,48 @@
         }
 
         function toggleRecording() {
-            if (!recognition) {
-                if (!initSpeechRecognition()) {
-                    return;
-                }
-            }
-
             if (isRecording) {
                 recognition.stop();
-                isRecording = false;
-                updateRecordingButton();
+                stopRecording();
             } else {
                 startRecognition();
             }
         }
 
+
         function startRecognition() {
+            if (!recognition && !initSpeechRecognition()) return;
+
+            if (isRecording) return;
+
+            clearResults();
+            isRecording = true;
+            hasFinalResult = false;
+            updateRecordingButton();
+
             try {
-                if (isRecording) return;
-
-                clearResults();
-                isRecording = true;
-                updateRecordingButton();
                 recognition.start();
-
-                // Stop after 30 seconds max
+                // Fallback stop in 30 seconds
                 setTimeout(() => {
                     if (isRecording) {
                         recognition.stop();
+                        stopRecording();
                     }
                 }, 30000);
-
             } catch (e) {
-                console.log('Error starting recognition:', e);
-                showRecordingStatus('error', 'Failed to start recording. Please try again.');
+                console.log('Start error:', e);
+                showRecordingStatus('error', 'Could not start recognition.');
                 stopRecording();
             }
         }
+
 
         function stopRecording() {
             isRecording = false;
             updateRecordingButton();
             document.getElementById('recording-status').classList.add('hidden');
         }
+
 
 
         function updateRecordingButton() {
@@ -544,18 +527,17 @@
         }
 
         function processRecognitionResult(spokenText) {
-            console.log('Processing result:', spokenText);
+            console.log('Final result:', spokenText);
+            hasFinalResult = true;
             document.getElementById('spoken-display').textContent = spokenText;
             compareTexts(originalText, spokenText);
             document.getElementById('results-area').classList.remove('hidden');
-            
-            // Stop recording after getting results
+
             if (isRecording) {
-                isRecording = false;
-                recognition.stop();
-                updateRecordingButton();
+                stopRecording();
             }
         }
+
 
         function normalizeText(text) {
             return text.toLowerCase()
