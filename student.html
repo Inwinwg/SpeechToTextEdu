@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Practice - Speech Comparison Tool</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .student-info {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .student-name-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .connection-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+        .connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        .disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👨‍🎓 Student Practice</h1>
+            <p>Practice your pronunciation with real-time feedback</p>
+        </div>
+
+        <div class="student-info">
+            <div id="name-input-section">
+                <label for="student-name">Enter your name:</label>
+                <input type="text" id="student-name" class="student-name-input" placeholder="Your name" onchange="updateStudentName()">
+                <button class="btn" onclick="confirmStudentName()" style="margin-top: 10px;">✅ Confirm Name</button>
+            </div>
+            <div id="name-confirmed-section" class="hidden">
+                <div style="background: #d4edda; color: #155724; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+                    ✅ <strong>Name confirmed:</strong> <span id="confirmed-name"></span>
+                </div>
+                <button class="btn" onclick="changeStudentName()" style="background: #6c757d;">✏️ Change Name</button>
+            </div>
+            <span id="connection-status" class="connection-status disconnected">Disconnected</span>
+        </div>
+
+        <div id="no-text-message" class="status info">
+            Waiting for teacher to set up practice text...
+        </div>
+
+        <div id="practice-area" class="hidden">
+            <div class="original-text">
+                <h3>📖 Text to Read:</h3>
+                <div id="display-text"></div>
+            </div>
+
+            <div class="status info">
+                Click the microphone button and read the text aloud clearly. Make sure to allow microphone access when prompted.
+            </div>
+
+            <button id="record-btn" class="btn recording-btn" onclick="toggleRecording()">
+                🎤 Start Recording
+            </button>
+            <button class="btn" onclick="clearResults()">🔄 Try Again</button>
+
+            <div id="recording-status" class="status hidden"></div>
+
+            <div id="results-area" class="comparison-area hidden">
+                <h3>📊 Comparison Results</h3>
+                
+                <div class="spoken-text">
+                    <h4>🗣️ What you said:</h4>
+                    <div id="spoken-display"></div>
+                </div>
+
+                <div class="text-display">
+                    <h4>📝 Word-by-word comparison:</h4>
+                    <div id="comparison-display"></div>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="accuracy-stat">0%</div>
+                        <div class="stat-label">Accuracy</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="correct-stat">0</div>
+                        <div class="stat-label">Correct Words</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="total-stat">0</div>
+                        <div class="stat-label">Total Words</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="score-stat">0</div>
+                        <div class="stat-label">Score</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="student.js"></script>
+</body>
+</html> 
